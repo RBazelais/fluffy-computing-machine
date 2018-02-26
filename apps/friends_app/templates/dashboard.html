@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{%  block content %}
+
+<main>
+    <h5>Hello, {{ user.alias }}!</h5>
+    <br>
+    <h6>Here is your list of friends:</h6>
+    <table class="table-striped" cellpadding="10" border="1px solid #000">
+        <tr>
+            <th>Alias</th> 
+            <th>Action</th>
+        </tr>
+        {% for user in my_friends %}
+            <tr>
+                <td>{{ user.alias }}</td> 
+                <td><a href="/friends/user/{{ user.id }}">View Profile</a> | <a href="/friends/remove/{{ user.id }}">Remove as a Friend</a></td>
+            </tr>
+        {% empty %}
+            <p>You don't have friends yet.</p>
+        {% endfor %}
+        <br>
+    </table>
+    <br>
+    <h6>Other Users not in your friend's list</h6>
+    <table class="table-striped" cellpadding="10" border="1px solid #000">
+        <tr>
+            <th>Alias</th>
+            <th>Action</th> 
+        </tr>
+        {% for user in all_users %}
+        <tr>
+            <td><a href="/friends/user/{{ user.id }}">{{ user.alias }}</a></td>
+            <td><a href="/friends/add/{{ user.id }}">Add as Friend</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+</main>
+
+{% endblock %}

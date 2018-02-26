@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    {% load static %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="{% static "style.css" %}">
+    <title>Friends App</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <br>
+                <h2>Welcome to Friends</h2>
+                <hr>
+            </div>
+                
+            <div class="col-md-6">
+                <fieldset>
+                    <legend>Registration</legend>
+                    <form action="/lr_app/register" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">    
+                            <label for="name">Name: </label>
+                            <input type="text" name="name" placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="alias">Alias: </label>
+                            <input type="text" name="alias" placeholder="Your alias">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email: </label>
+                            <input type="text" name="email" placeholder="Email">
+                        </div>
+                        <div class="form-group">
+                            <label for="birthday">Birthday: </label>
+                            <input type="date" name="birthday">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password: </label>
+                            <input type="password" name="password" placeholder="Password"> 
+                        </div>
+                        <div class="form-group">
+                            <p><small>*Password should be atleast 8 characters</small></p>
+                            <label for="confirm_password">Confirm Password: </label>
+                            <input type="password" name="confirm_password" placeholder="Confirm password">
+                        </div>
+                        <input type="submit" value='Register'>
+                    </form>
+                </fieldset>
+            </div>
+            <div class="col-md-6">
+                <fieldset>
+                    <legend>Login</legend>
+                    <form action="/lr_app/login" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="email">Email: </label>
+                            <input type="text" name="email" placeholder=" Email">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password: </label>
+                            <input type="password" name="password" placeholder=" Password">
+                        </div>
+                        <input type="submit" value='Login'>
+                    </form>
+                </fieldset>
+            </div>
+            {% if messages %}
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

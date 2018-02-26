@@ -1,0 +1,242 @@
+Works with 
+    user.friendships.all()
+    user.friendships.add()
+    >>> hanny.friendships.add(User.objects.get(id=4))
+    >>> hanny.save()
+    >>> hanny.friendships.all()
+    <QuerySet [<User: Chloe>]>
+
+Views: {
+    from __future__ import unicode_literals
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from ..login.models import User
+from .models import Friendship
+
+# Create your views here.
+def friends(request):
+    if 'user_id' not in request.session:
+        print "The user is not in session"
+        return redirect('/lr_app')
+    else:
+        curr_user = User.objects.get(id=request.session['user_id'])
+
+        # create a friendship instance here; every time a user is made add to that instance
+        Friendship.objects.create(from_person=curr_user, to_person=null)
+        context = {
+            'user': curr_user,
+            'my_friends': curr_user.friendships.all(),
+            # Friendship.objects.filter(from_person=User.objects.get(id=request.session['user_id'])),
+            # 'new_friends': curr_user.friendships.filter(to_people = Friendship.objects.get(id=request.session['user_id'])),
+            # 'not_friends': curr_user.friendships.exclude(from_people = Friendship.objects.get(id=request.session['user_id'])),
+            'all_users': User.objects.all().exclude(Friendship.objects.all()),
+            
+        }
+    return render(request, "dashboard.html", context)
+
+def create_friendship(request):
+    new_friend = Friendship.objects.friend_validator(request.POST)
+    if new_friend[0]:
+        print "A new trip should be in the database now..."
+        return redirect('/friends')
+    else:
+        for err in new_friend[1]:
+            messages.error(request, err)
+        return redirect('/friends')
+
+def add_friend(request, id):
+    # new_friend = Friendship.objects.friend_validator(request.POST)
+    print "************"
+    print request.POST
+    this_person = User.objects.get(id=id) # person you clicked on add friend in html
+    curr_user = User.objects.get(id=request.session['user_id']) # User in session
+    print "************"
+    print this_person
+    print curr_user
+
+    # create friendship instance
+    # like so: Friendship.objects.create(from_person=will, to_person=hanny)
+    Friendship.objects.add_friendship(request.POST)
+    print "************"
+    print "Friendship instance created"
+
+    # add the current user in session to "person's" friendships(see models)
+    this_person.friendships.add(curr_user)
+
+    # save changes
+    this_person.save()
+    curr_user.save()
+
+    print "************"
+    print "friend added to user in session"
+    return redirect('/friends')
+
+def remove_friend(request, id):
+    curr_user = User.objects.get(id=request.session['user_id']) 
+    this_person = User.objects.get(id=id) # person you clicked on remove friend in html
+    Friendship.objects.filter(
+        from_person = curr_user, 
+        to_person = this_person
+        ).last().delete()
+    return redirect('/friends')
+        
+
+def profile(request, id):
+    this_person = User.objects.get(id=id)
+    context = {
+        'user': User.objects.get(id=request.session['user_id']),
+        'name': this_person.name,
+        'email': this_person.email,
+    }
+    return render(request, 'profile.html', context)
+
+Models ********
+from __future__ import unicode_literals
+from django.db import models
+from ..login.models import User
+
+# Create your models here.
+class FriendshipManager(models.Manager):
+    def friend_validator(self, postData):
+        existingFriend = Friendship.objects.filter(
+            from_person=postData['from_person'], 
+            to_person=postData['to_person']
+        )
+
+        if len(existingFriend) > 0:
+            existingFriend[0].save()
+        else:
+            Friendship.objects.create(
+                from_person = postData['from_person'],
+                to_person = postData['to_person']
+            )
+        return True
+
+    def add_friendship(self, person, status):
+        # self = postData['from_person']
+        # person = postData['to_person']
+        friendship = Friendship.objects.get_or_create(
+            from_person=self,
+            to_person=person
+        )
+        return friendship
+    
+    def remove_friendship(self, person):
+        Friendship.objects.filter(
+            from_person=self,
+            to_person=person
+        ).delete()
+
+class Friendship(models.Model):
+    from_person = models.ForeignKey(User, related_name='from_people')
+    to_person = models.ForeignKey(User, related_name='to_people')
+    objects = FriendshipManager()
+
+    def __str__(self):
+        return '%s %s %s' % (self.from_person, "befriended", self.to_person)
+
+    # def add_friendship(self, person):
+    #     friendship = Friendship.objects.get_or_create(
+    #         from_person=self,
+    #         to_person=person
+    #     )
+    #     return friendship
+
+# Friendship.objects.filter(to_person = User.objects.get(id=2))
+# <QuerySet [<Friendship: Friendship object>]>
+# >>> Friendship.objects.filter(to_person= User.objects.get(id=1))
+# <QuerySet []>
+# >>> Friendship.objects.filter(from_person= User.objects.get(id=1))
+# <QuerySet [<Friendship: Friendship object>]>
+# >>> Friendship.objects.exclude(from_person= User.objects.get(id=1))
+# <QuerySet []>
+# >>> Friendship.objects.exclude(to_person= User.objects.get(id=1))
+# <QuerySet [<Friendship: Friendship object>]>
+# >>> Friendship.objects.exclude(to_person= User.objects.get(id=1)).all()
+
+# def add_friendship(self, person):
+#     friendship = Friendship.objects.get_or_create(
+#         from_person=self,
+#         to_person=person
+#     )
+#     return friendship
+'''
+# from apps.friends_app.models import *
+    # User.objects.all()
+
+    #<QuerySet [<User: Will>, <User: Hanny>, <User: Nate>, <User: Nadine>, <User: Chloe>, <User: Gizmo>]>
+    # >>> this_user = User.objects.get(id=1)
+    # >>> this_person = User.objects.get(id=2)
+    # >>> this_person.friends.add(this_user)
+
+def make_friend(self, sender, reciever):
+    # sender = User.objects.get(id=sender)
+    # reciever = User.objects.get(id=reciever)
+
+    # existingFriend = Friend.objects.filter(request_sent=sender, request_recieved=reciever)
+    
+    # if len(existingFriend) > 0:
+    #     existingFriend[0].save()
+    # else:
+    #     Friend.objects.create(
+    #         request_sent = sender,
+    #         request_recieved = reciever
+    #     )
+    # return "User made a new friend"
+    pass
+'''
+
+HTML ******
+{% extends 'base.html' %}
+{%  block content %}
+
+<main>
+    <div>
+        <div class="nav">
+            <h5>Hello, {{ user.alias }}!</h5>
+            <a style="float: right;" href="/lr_app/logout">Logout</a>
+            <br>
+        </div> 
+        <br>
+        <h6>Here is your list of friends:</h6>
+        <table class="table-striped" cellpadding="10" border="1px solid #000">
+            <tr>
+                <th>Alias</th> 
+                <th>Action</th>
+            </tr>
+            {% for user in my_friends %}
+                <tr>
+                    <td>{{ user.alias }}</td> 
+                    <td><a href="/friends/user/{{ user.id }}">View Profile</a> | <a href="/friends/remove_friend/">Remove as a Friend</a></td>
+                </tr>
+            {% empty %}
+                <p>You don't have friends yet.</p>
+            {% endfor %}
+            {% for user in added_friends %}
+                <tr>
+                    <td>{{ user.alias }}</td> 
+                    <td><a href="/friends/user/{{ user.id }}">View Profile</a> | <a href="/friends/remove_friend/">Remove as a Friend</a></td>
+                </tr>
+            {% endfor %}
+            <br>
+        </table>
+        <br>
+        <h6>Other Users not in your friend's list</h6>
+        <table class="table-striped" cellpadding="10" border="1px solid #000">
+            <tr>
+                <th>Alias</th>
+                <th>Action</th> 
+            </tr>
+            {% for user in all_users %}
+            <tr>
+                <td>{{ user.alias }}</td>
+                <td><a href="/friends/add/{{ user.id }}">Add as Friend</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <br>
+    </div>
+</main>
+
+{% endblock %}
+
